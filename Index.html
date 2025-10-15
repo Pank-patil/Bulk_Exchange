@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Exchange - Decentralized Perpetual Trading</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            /* Colorful Palette */
+            --primary-color: #8a2be2;  /* Vibrant Purple */
+            --secondary-color: #ff00e5;/* Hot Pink */
+            --accent-color: #00f5ff;   /* Electric Cyan */
+            --background-color: #0d0221; /* Deep Indigo */
+            --text-color: #f0e6ff;     /* Light Lavender */
+            --card-glass-bg: rgba(255, 255, 255, 0.05);
+            --font-primary: 'Space Grotesk', sans-serif;
+            --font-secondary: 'Roboto', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-secondary);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- Animated Gradient Background --- */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(315deg, 
+                var(--primary-color), 
+                var(--background-color) 40%, 
+                var(--secondary-color)
+            );
+            background-size: 200% 200%;
+            animation: gradient-flow 15s ease infinite;
+            z-index: -1;
+            opacity: 0.4;
+        }
+
+        @keyframes gradient-flow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        h1, h2, h3 {
+            font-family: var(--font-primary);
+            color: #FFF;
+            text-shadow: 0 0 10px rgba(170, 43, 226, 0.5);
+        }
+        
+        /* --- General & Helper Classes --- */
+        .section-padding { padding: 100px 0; }
+        .initially-hidden { display: none; }
+
+        .section-title {
+            margin-bottom: 60px;
+            position: relative;
+            color: #fff;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-color), var(--secondary-color));
+            border-radius: 2px;
+            box-shadow: 0 0 15px var(--accent-color);
+        }
+        
+        /* --- Animation Keyframes --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes portal-zoom {
+            0% { transform: translate(-50%, -50%) scale(0.01); opacity: 0.7; border-width: 10px; }
+            80% { opacity: 1; border-width: 2px; }
+            100% { transform: translate(-50%, -50%) scale(30); opacity: 0; }
+        }
+
+        @keyframes grow-up {
+            from { transform: scaleY(0); }
+            to { transform: scaleY(1); }
+        }
+
+        /* --- Portal Animation --- */
+        #portal-container {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: var(--background-color); z-index: 9999; display: none;
+            justify-content: center; align-items: center; overflow: hidden;
+        }
+        .portal-ring {
+            position: absolute; top: 50%; left: 50%; border: 4px solid var(--accent-color);
+            border-radius: 50%; opacity: 0; aspect-ratio: 1 / 1; width: 5vw;
+        }
+        .portal-active .portal-ring { animation: portal-zoom 2.0s ease-in forwards; }
+        .portal-active .portal-ring:nth-child(2) { animation-delay: 0.2s; border-color: var(--secondary-color); }
+        .portal-active .portal-ring:nth-child(3) { animation-delay: 0.4s; }
+        .portal-active .portal-ring:nth-child(4) { animation-delay: 0.6s; border-color: var(--secondary-color); }
+        .portal-active .portal-ring:nth-child(5) { animation-delay: 0.8s; }
+
+        /* --- Header & Hero Section --- */
+        header { height: 100vh; transition: opacity 0.5s ease-out; background: transparent; }
+        .navbar-dark .navbar-brand { font-family: var(--font-primary); font-size: 1.8rem; color: #fff; }
+        .hero { height: 100%; display: flex; align-items: center; text-align: center; }
+        .hero h1 { font-size: 4rem; animation: fadeIn 1s ease-out; }
+        .hero p { font-size: 1.25rem; animation: fadeIn 1.2s ease-out; }
+        .hero .btn { animation: fadeIn 1.4s ease-out; }
+
+        .btn-accent {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: #fff; padding: 15px 35px; font-weight: bold; border-radius: 5px;
+            transition: all 0.4s ease; border: none; box-shadow: 0 0 20px rgba(255, 0, 229, 0.4);
+        }
+        .btn-accent:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 0 35px rgba(255, 0, 229, 0.8);
+        }
+
+        .hero-links .btn {
+            background: var(--card-glass-bg);
+            border: 1px solid var(--accent-color); color: var(--accent-color);
+            margin: 0 10px; font-size: 1rem; padding: 10px 15px;
+            backdrop-filter: blur(5px); transition: all 0.3s ease;
+        }
+        .hero-links .btn:hover {
+            background: var(--accent-color); color: var(--background-color);
+            box-shadow: 0 0 15px var(--accent-color);
+        }
+
+        /* --- Advanced CSS "Glassmorphism" Card Style --- */
+        .glass-card {
+            background: var(--card-glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            height: 100%;
+        }
+        .glass-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            border-color: var(--accent-color);
+        }
+        .glass-card::before { /* Glow effect on hover */
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, var(--accent-color), transparent, transparent);
+            transform: rotate(0deg);
+            transition: transform 1s ease, opacity 0.5s ease;
+            opacity: 0;
+            z-index: -1;
+        }
+        .glass-card:hover::before {
+            transform: rotate(180deg);
+            opacity: 0.15;
+        }
+        .card-icon {
+            font-size: 3rem; margin-bottom: 20px;
+            background: -webkit-linear-gradient(45deg, var(--accent-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- Chart Section --- */
+        #charts { background: rgba(0,0,0,0.2); }
+        .chart-container {
+            height: 350px; display: flex; align-items: flex-end; justify-content: space-around;
+            padding: 30px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);
+            background: var(--card-glass-bg); backdrop-filter: blur(10px);
+        }
+        .chart-bar {
+            width: 25px; border-radius: 5px; transform-origin: bottom;
+            animation: grow-up 1.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+            background: linear-gradient(to top, var(--primary-color), var(--secondary-color));
+            box-shadow: 0 0 10px var(--primary-color);
+        }
+
+        /* --- Team Section --- */
+        .team-card img {
+            width: 150px; height: 150px; object-fit: cover;
+            border-radius: 50%; border: 4px solid transparent;
+            background: linear-gradient(var(--background-color), var(--background-color)) padding-box,
+                        linear-gradient(45deg, var(--secondary-color), var(--accent-color)) border-box;
+            box-shadow: 0 0 20px rgba(138, 43, 226, 0.5);
+            transition: transform 0.4s ease;
+        }
+        .team-card:hover img { transform: scale(1.1); }
+        .team-socials a { color: var(--text-color); font-size: 1.5rem; margin: 0 10px; transition: color 0.3s ease; }
+        .team-socials a:hover { color: var(--accent-color); }
+
+        /* --- Quiz Section --- */
+        #quiz-container { background: transparent; }
+        .quiz-question { margin-bottom: 2rem; }
+        .form-check-label {
+            display: block; width: 100%; padding: 1rem;
+            background: var(--card-glass-bg);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; cursor: pointer;
+            transition: all 0.3s;
+        }
+        .form-check-label:hover { border-color: var(--secondary-color); transform: translateX(5px); }
+        .form-check-input { display: none; }
+        .form-check-input:checked + .form-check-label {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-color: var(--accent-color);
+            box-shadow: 0 0 15px var(--secondary-color);
+            color: #fff;
+        }
+        #quiz-result {
+            display: none; text-align: center;
+            animation: fadeIn 1s ease-out;
+        }
+        #share-btn { background-color: #1DA1F2; border-color: #1DA1F2; }
+
+        /* --- Footer --- */
+        footer { background: rgba(13, 2, 33, 0.5); padding: 40px 0; }
+        .footer-socials a:hover { color: var(--accent-color); }
+    </style>
+</head>
+<body>
+
+    <div id="portal-container">
+        <div class="portal-ring"></div>
+        <div class="portal-ring"></div>
+        <div class="portal-ring"></div>
+        <div class="portal-ring"></div>
+        <div class="portal-ring"></div>
+    </div>
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark pt-4">
+            <div class="container">
+                <a class="navbar-brand" href="https://bulk.trade" target="_blank">Bulk Exchange</a>
+            </div>
+        </nav>
+        <div class="hero">
+            <div class="container">
+                <h1 class="display-3 fw-bold">The Future of Decentralized Trading.</h1>
+                <p class="lead my-4">A high-performance perpetual contract trading platform on Solana. <br> First, test your knowledge.</p>
+                <div class="mb-4">
+                    <a href="#" id="start-portal-btn" class="btn btn-accent btn-lg">Enter QUIZ Portal</a>
+                </div>
+                <div class="hero-links mt-5 d-flex justify-content-center flex-wrap">
+                     <a href="https://x.com/_bulktrade" target="_blank" class="btn m-2"><i class="bi bi-twitter-x"></i> X (Twitter)</a>
+                     <a href="https://discord.gg/m2qz7y4j5c" target="_blank" class="btn m-2"><i class="bi bi-discord"></i> Discord</a>
+                     <a href="https://alphadocs.bulk.trade" target="_blank" class="btn m-2"><i class="bi bi-journal-text"></i> Docs</a>
+                     <a href="https://solanafloor.com/news/bulk-raises-8m-seed-round-amidst-solana-perps-drought" target="_blank" class="btn m-2"><i class="bi bi-newspaper"></i> Solana Floor Article</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="initially-hidden">
+
+        <section id="features" class="section-padding">
+            <div class="container">
+                <h2 class="section-title text-center">Our Technology</h2>
+                <div class="row g-4 text-center">
+                    <div class="col-lg-4 col-md-6">
+                        <div class="glass-card">
+                            <div class="card-icon"><i class="bi bi-book"></i></div>
+                            <h3>Central Limit Order Book</h3>
+                            <p>Ensuring efficient and fair trade execution based on price-time priority for a professional trading experience.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6">
+                        <div class="glass-card">
+                            <div class="card-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+                            <h3>High-Performance Matching</h3>
+                            <p>Our off-chain matching engine pairs orders at lightning speed, rivaling centralized exchanges.</p>
+                        </div>
+                    </div>
+                     <div class="col-lg-4 col-md-6">
+                        <div class="glass-card">
+                            <div class="card-icon"><i class="bi bi-shield-check"></i></div>
+                            <h3>Real-Time Risk Management</h3>
+                            <p>The ClearingHouse and LiquidationEngine work in tandem to maintain market stability and system solvency.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="charts" class="section-padding">
+            <div class="container">
+                <h2 class="section-title text-center">Unmatched Performance</h2>
+                 <div class="row align-items-center g-5">
+                    <div class="col-lg-5">
+                        <h3 class="mb-3">Sub-Millisecond Latency</h3>
+                        <p class="lead">Our innovative "block-less, leader-less" architecture removes bottlenecks, delivering a seamless trading experience without sacrificing decentralization.</p>
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="chart-container">
+                            <div class="chart-bar" style="height: 60%; animation-delay: 0.1s;"></div>
+                            <div class="chart-bar" style="height: 80%; animation-delay: 0.2s;"></div>
+                            <div class="chart-bar" style="height: 50%; animation-delay: 0.3s;"></div>
+                            <div class="chart-bar" style="height: 90%; animation-delay: 0.4s;"></div>
+                            <div class="chart-bar" style="height: 75%; animation-delay: 0.5s;"></div>
+                            <div class="chart-bar" style="height: 65%; animation-delay: 0.6s;"></div>
+                            <div class="chart-bar" style="height: 85%; animation-delay: 0.7s;"></div>
+                            <div class="chart-bar" style="height: 95%; animation-delay: 0.8s;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="team" class="section-padding">
+            <div class="container">
+                <h2 class="section-title text-center">Team</h2>
+                <div class="row justify-content-center g-4">
+                    <div class="col-lg-3 col-md-6">
+                        <div class="glass-card team-card text-center">
+                           
+                            <h3 class="h5">kdot | bulk</h3>
+                            <p class="text-white-50 mb-3">Co-founder</p>
+                            <div class="team-socials">
+                                <a href="https://x.com/kdotcrypto" target="_blank"><i class="bi bi-twitter-x"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="glass-card team-card text-center">
+                           
+                            <h3 class="h5">Jun | bulk trade</h3>
+                            <p class="text-white-50 mb-3">Co-founder</p>
+                            <div class="team-socials">
+                                <a href="https://x.com/junbug_sol" target="_blank"><i class="bi bi-twitter-x"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="glass-card team-card text-center">
+                           
+                            <h3 class="h5">hotlneblng</h3>
+                            <p class="text-white-50 mb-3">Propagandist</p>
+                            <div class="team-socials">
+                                <a href="https://x.com/hotlneblng_" target="_blank"><i class="bi bi-twitter-x"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="glass-card team-card text-center">
+                            
+                            <h3 class="h5">glowburger</h3>
+                            <p class="text-white-50 mb-3">Design Engineer</p>
+                            <div class="team-socials">
+                                <a href="https://x.com/glowburger" target="_blank"><i class="bi bi-twitter-x"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <section id="quiz" class="section-padding" style="background: rgba(0,0,0,0.2);">
+            <div class="container">
+                <h2 class="section-title text-center">Knowledge Check</h2>
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <form id="quiz-form">
+                            <div id="quiz-container">
+                                </div>
+                            <div class="text-center mt-4">
+                                <button type="submit" id="submit-quiz-btn" class="btn btn-accent btn-lg">Submit Quiz</button>
+                            </div>
+                        </form>
+                        <div id="quiz-result" class="glass-card mt-5">
+                            <h3 id="score-text" class="display-4 fw-bold"></h3>
+                            <p class="lead my-4">Great job! Feel free to share your achievement with the community.</p>
+                            <a id="share-btn" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-lg btn-primary">
+                                <i class="bi bi-twitter-x"></i> Share on X
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="initially-hidden text-center text-white">
+        <div class="container">
+            <p class="mb-3">&copy; 2025 Bulk Exchange. All rights reserved.</p>
+            <div class="footer-socials">
+                <a href="https://x.com/_bulktrade" target="_blank"><i class="bi bi-twitter-x"></i></a>
+                <a href="https://discord.gg/m2qz7y4j5c" target="_blank"><i class="bi bi-discord"></i></a>
+                <a href="#"><i class="bi bi-telegram"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // --- Portal Animation Logic ---
+            const startPortalBtn = document.getElementById('start-portal-btn');
+            const portalContainer = document.getElementById('portal-container');
+            const header = document.querySelector('header');
+            const mainContent = document.querySelector('main');
+            const footer = document.querySelector('footer');
+
+            startPortalBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                portalContainer.style.display = 'flex';
+                document.body.classList.add('portal-active');
+
+                setTimeout(() => {
+                    header.style.display = 'none'; 
+                    portalContainer.style.display = 'none';
+
+                    mainContent.style.display = 'block';
+                    footer.style.display = 'block';
+
+                    mainContent.scrollIntoView({ behavior: 'smooth' });
+
+                }, 2200); 
+            });
+
+
+            // --- Quiz Logic ---
+            const quizData = [
+                { question: "What type of platform is Bulk Exchange?", options: { a: "A centralized cryptocurrency exchange", b: "A decentralized perpetual contract trading platform", c: "A stock trading platform", d: "A peer-to-peer lending platform" }, answer: "b" },
+                { question: "On which blockchain is Bulk Exchange built?", options: { a: "Ethereum", b: "Bitcoin", c: "Solana", d: "Binance Smart Chain" }, answer: "c" },
+                { question: "What is the core of the Bulk Exchange's trading system?", options: { a: "Automated Market Maker (AMM)", b: "Central Limit Order Book (CLOB)", c: "Over-the-counter (OTC) desk", d: "A peer-to-peer network" }, answer: "b" },
+                { question: "What is the role of the ClearingHouse?", options: { a: "To execute trades", b: "To provide customer support", c: "To manage accounts, positions, and risk", d: "To list new trading pairs" }, answer: "c" },
+                { question: "What is the purpose of the LiquidationEngine?", options: { a: "To add liquidity to the market", b: "To manage the liquidation of under-collateralized positions", c: "To process deposits and withdrawals", d: "To provide market data" }, answer: "b" },
+                { question: "What is a 'pre-flight margin check'?", options: { a: "A check to ensure the user has enough funds before placing an order", b: "A security check to prevent hacking", c: "A check to ensure the user's identity", d: "A check to ensure the user has the latest version of the trading app" }, answer: "a" },
+                { question: "How much was raised in the seed round for Bulk?", options: { a: "$1 million", b: "$5 million", c: "$8 million", d: "$10 million" }, answer: "c" },
+                { question: "Bulk Exchange is a '____-less, ____-less, geographically distributed CLOB exchange'.", options: { a: "Block, Leader", b: "Fee, Limit", c: "Trust, Permission", d: "Central, Hub" }, answer: "a" }
+            ];
+            
+            const quizContainer = document.getElementById('quiz-container');
+            const quizForm = document.getElementById('quiz-form');
+            const resultContainer = document.getElementById('quiz-result');
+            const scoreText = document.getElementById('score-text');
+            const shareButton = document.getElementById('share-btn');
+
+            function buildQuiz() {
+                const output = [];
+                quizData.forEach((currentQuestion, qNumber) => {
+                    const options = [];
+                    for (const letter in currentQuestion.options) {
+                        options.push(
+                            `<div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="question${qNumber}" id="q${qNumber}${letter}" value="${letter}">
+                                <label class="form-check-label" for="q${qNumber}${letter}">
+                                    ${letter.toUpperCase()}) ${currentQuestion.options[letter]}
+                                </label>
+                            </div>`
+                        );
+                    }
+                    output.push(
+                        `<div class="quiz-question mb-4">
+                            <p class="lead">${qNumber + 1}. ${currentQuestion.question}</p>
+                            <div class="options">${options.join('')}</div>
+                        </div>`
+                    );
+                });
+                quizContainer.innerHTML = output.join('');
+            }
+            
+            function showResults(event) {
+                event.preventDefault();
+                let score = 0;
+                let allAnswered = true;
+
+                quizData.forEach((currentQuestion, qNumber) => {
+                    const selector = `input[name=question${qNumber}]:checked`;
+                    const checkedInput = document.querySelector(selector);
+                    
+                    if (!checkedInput) {
+                        allAnswered = false;
+                    } else {
+                        const userAnswer = checkedInput.value;
+                        if (userAnswer === currentQuestion.answer) {
+                            score++;
+                        }
+                    }
+                });
+
+                if (!allAnswered) {
+                    alert("Please answer all questions before submitting.");
+                    return;
+                }
+
+                scoreText.textContent = `You scored ${score} / ${quizData.length}!`;
+                
+                const teamXHandle = "_bulktrade";
+const tweetText = encodeURIComponent(`🚀 Just scored ${score}/${quizData.length} on the @_bulktrade knowledge quiz — created by @Jerry_HCcapita! 🔥 Bulk is a high-performance perpetuals platform built on @solana.
+
+📍 Testnet is launching soon — take the quiz early and explore. The team is watching 👀
+. Quiz link is in his pinned tweet.`);
+                shareButton.href = `https://twitter.com/intent/tweet?text=${tweetText}`;
+
+                quizForm.style.display = 'none';
+                resultContainer.style.display = 'block';
+            }
+
+            buildQuiz();
+            quizForm.addEventListener('submit', showResults);
+        });
+    </script>
+</body>
+</html>
